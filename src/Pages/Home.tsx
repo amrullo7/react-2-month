@@ -1,100 +1,55 @@
-import { useTodo } from "@/store/todo"
-import { useEffect, useState } from "react"
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { useAtom } from "jotai"
-import { cntatom } from "@/store/atomtodo"
+import { addUser, deleteUser, editUser} from "@/store/counter"
+import {  type AppStore, type RootState } from "@/store/store"
+import { useState } from "react"
+import { useDispatch, useSelector } from "react-redux"
 
 const Home = () => {
-  let {data,getData,addUser}=useTodo()
-  let [cnt,setcnt]=useAtom(cntatom)
-  let [add,setAdd]=useState(false)
-  function handleAdd(e:any) {
-    e.preventDefault()
-    let newUser=new FormData()
-    newUser.append("name",e.target.name.value),
-    newUser.append("description",e.target.desc.value)
-    for(let el of e.target.photo.files){
-     newUser.append("images",el)
-    }
-    addUser(newUser)
-            
- 
+  const [elem,setElem]=useState({id:null,name:"",job:"",age:null})
+  const dispatch=useDispatch()
+ const {data} = useSelector((store:RootState)=>store.counter)
+ function handleSubmit(e:any) {
+  e.preventDefault()
+  let newUser={
+    name:e.target.name.value,
+    job:e.target.job.value,
+    age:e.target.age.value,
+    id:elem.id?elem.id:Date.now()
   }
-  useEffect(()=>{
-    getData()
-  },[])
+  if(elem.id){
+    dispatch(editUser(newUser))
+  }
+  else{
+    dispatch(addUser(newUser))
+  }
+
+  e.target.reset()
+  setElem({id:null,name:"",job:"",age:null})
+ }
+ function handleEdit(e:any) {
+  setElem(e)
+ }
+ 
   return (
     <div>
-      {cnt}
-      <button onClick={()=>setcnt(cnt+1)}>+</button>
-      <button onClick={()=>setcnt(0)}>reset</button>
+      <form action="" className="border rounded-[12px] gap-[10px] p-4 w-[500px] flex flex-col" onSubmit={handleSubmit}>
+        <input className="w-[350px] border p-2 rounded-[8px] " placeholder="Name"   defaultValue={elem.name} type="text" name="name" id="" />
+        <input className="w-[350px] border p-2 rounded-[8px] " placeholder="Age"  defaultValue={elem.age?elem.age:""} type="text" name="age" id="" />
+        <input className="w-[350px] border p-2 rounded-[8px] " placeholder="job"  defaultValue={elem.job} type="text" name="job" id="" />
+        <Button className="bg-blue-700 w-[350px] border p-2 rounded-[8px] " type="submit">{elem.id?"Save":"Add"}</Button>
+      </form>
+      <div className="grid grid-cols-3 gap-[15px] justify-center ">
 
- <Dialog open={add}>
-  <DialogTrigger>
-    <Button onClick={()=>setAdd(true)}>
-
-   + Add User
-    </Button>
-    </DialogTrigger>
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Are you absolutely sure?</DialogTitle>
-     
-    </DialogHeader>
-    <form action="" onSubmit={handleAdd}>
-      <input type="text" name="name" id="" />
-      <input type="text" name="desc" id="" />
-      <input type="file" multiple name="photo" id="" />
-      <button type="submit" onClick={()=>setAdd(false)}>Submit</button>
-    </form>
-  </DialogContent>
-</Dialog>
-
-
-
-      <Table className="w-[100%]">
-  <TableCaption>A list of your recent invoices.</TableCaption>
-  <TableHeader>
-    <TableRow>
-      <TableHead>Id</TableHead>
-      <TableHead>Avatar</TableHead>
-      <TableHead>Name</TableHead>
-      <TableHead>Desc</TableHead>
-      <TableHead > Actions</TableHead>
-    </TableRow>
-  </TableHeader>
-  <TableBody>
-     {data.map((el)=>{
-        return  <TableRow key={el.id}>
-          <TableCell>{el.id}</TableCell>
-          <TableCell>{el.name}</TableCell>
-          <TableCell>{el.description}</TableCell>
-          <TableCell>
-          <Button className="bg-red-700">Delete</Button>
-
-          </TableCell>
-        </TableRow>
+      {data.map((el)=>{
+        return <div className="flex-col w-[400px] gap-[15px] mx-auto border rounded-2xl  p-4 " key={el.id}>
+          <h1>{el.name}</h1>
+          <p>{el.job}</p>
+          <p>{el.age}</p>
+          <Button className="bg-red-600" onClick={()=>dispatch(deleteUser(el.id))}>Delete</Button>
+          <Button className="bg-green-600" onClick={()=>handleEdit(el)}>Edit</Button>
+        </div>
       })}
-  </TableBody>
-</Table>
-     
+      </div>
     </div>
   )
 }
