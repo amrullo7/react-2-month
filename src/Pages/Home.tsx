@@ -1,97 +1,199 @@
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useFormik } from "formik";
 
 type User = {
-  name: string;
   id: number;
+  name: string;
   job: string;
   status: boolean;
 };
 
-type valuesrf = {
+type FormValues = {
   name: string;
   job: string;
   status: string;
 };
 
+const initialUsers: User[] = [
+  {
+    id: 1,
+    name: "Abdullo",
+    job: "Student",
+    status: true,
+  },
+  {
+    id: 2,
+    name: "Muhammad",
+    job: "Teacher",
+    status: false,
+  },
+  {
+    id: 3,
+    name: "Qurbon",
+    job: "Singer",
+    status: true,
+  },
+];
+
 const Home = () => {
-  const { register, handleSubmit, reset } = useForm<valuesrf>({
-    defaultValues: {
+  const [data, setData] = useState<User[]>(initialUsers);
+  const [editId, setEditId] = useState<number | null>(null);
+
+  const formik = useFormik<FormValues>({
+    initialValues: {
       name: "",
       job: "",
       status: "true",
     },
+
+    validate: (values) => {
+      const errors: Partial<FormValues> = {};
+
+      if (!values.name.trim()) {
+        errors.name = "Name is required";
+      }
+
+      if (!values.job.trim()) {
+        errors.job = "Job is required";
+      }
+
+      return errors;
+    },
+
+    onSubmit: (values, { resetForm }) => {
+      if (editId !== null) {
+        setData((prev) =>
+          prev.map((el) =>
+            el.id === editId
+              ? {
+                  ...el,
+                  name: values.name.trim(),
+                  job: values.job.trim(),
+                  status: values.status === "true",
+                }
+              : el
+          )
+        );
+
+        setEditId(null);
+      } else {
+        const newUser: User = {
+          id: Date.now(),
+          name: values.name.trim(),
+          job: values.job.trim(),
+          status: values.status === "true",
+        };
+
+        setData((prev) => [...prev, newUser]);
+      }
+
+      resetForm();
+    },
   });
 
-  const [elem, setElem] = useState<User | null>(null);
+  const handleEdit = (user: User) => {
+    setEditId(user.id);
 
-  const [data, setData] = useState<User[]>([
-    { name: "Abdullo", id: 1, job: "Student", status: true },
-    { name: "Muhammad", id: 2, job: "Teacher", status: false },
-    { name: "Qurbon", id: 3, job: "Singer", status: true },
-  ]);
-
-  function handleDelete(id: number) {
-    setData((prev) => prev.filter((e) => e.id !== id));
-  }
-
-  function handleEdit(user: User) {
-    setElem(user);
-    reset({
+    formik.setValues({
       name: user.name,
       job: user.job,
       status: String(user.status),
     });
-  }
 
-  function handleAdd(values: valuesrf) {
-    const newUser: User = {
-      name: values.name,
-      job: values.job,
-      id: elem ? elem.id : Date.now(),
-      status: values.status === "true",
-    };
+    formik.setTouched({});
+  };
 
-    if (elem) {
-      setData((prev) =>
-        prev.map((e) => (e.id === elem.id ? newUser : e))
-      );
-    } else {
-      setData((prev) => [...prev, newUser]);
+  const handleDelete = (id: number) => {
+    setData((prev) => prev.filter((el) => el.id !== id));
+
+    if (editId === id) {
+      setEditId(null);
+      formik.resetForm();
     }
-
-    setElem(null);
-    reset();
-  }
+  };
 
   return (
     <div className="p-5">
-      <form onSubmit={handleSubmit(handleAdd)} className="flex gap-2 mb-5">
-        <input className="border p-2 rounded" placeholder="Name" {...register("name")} />
-        <input className="border p-2 rounded" placeholder="Job" {...register("job")} />
+      <form
+        aria-label="user-form"
+        onSubmit={formik.handleSubmit}
+        className="flex flex-col gap-3 mb-5"
+      >
+        <div>
+          <input
+            name="name"
+            placeholder="Name"
+            className="border p-2 rounded"
+            value={formik.values.name}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+          />
 
-        <select className="border p-2 rounded" {...register("status")}>
+          {formik.touched.name && formik.errors.name && (
+            <p className="text-red-500">
+              {formik.errors.name}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <input
+            name="job"
+            placeholder="Job"
+            className="border p-2 rounded"
+            value={formik.values.job}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+          />
+
+          {formik.touched.job && formik.errors.job && (
+            <p className="text-red-500">
+              {formik.errors.job}
+            </p>
+          )}
+        </div>
+
+        <select
+          name="status"
+          className="border p-2 rounded"
+          value={formik.values.status}
+          onChange={formik.handleChange}
+        >
           <option value="true">Active</option>
           <option value="false">Inactive</option>
         </select>
 
-        <button className="bg-blue-500 text-white p-2 rounded" type="submit">
-          {elem ? "Edit" : "Add"}
+        <button
+          className="bg-blue-500 text-white p-2 rounded"
+          type="submit"
+        >
+          {editId !== null ? "Edit" : "Add"}
         </button>
       </form>
 
-      {data.map((e) => (
-        <div key={e.id} className="border p-3 rounded mb-3">
-          <h1>{e.name}</h1>
-          <p>{e.job}</p>
-          <p>{e.status ? "Active" : "Inactive"}</p>
+      {data.map((el) => (
+        <div
+          key={el.id}
+          className="border p-3 rounded mb-3"
+        >
+          <h1>{el.name}</h1>
+          <p>{el.job}</p>
+          <p>{el.status ? "Active" : "Inactive"}</p>
 
-          <button className="bg-yellow-500 text-white p-2 rounded mr-2" type="button" onClick={() => handleEdit(e)}>
+          <button
+            className="bg-yellow-500 text-white p-2 rounded mr-2"
+            type="button"
+            onClick={() => handleEdit(el)}
+          >
             Edit
           </button>
 
-          <button className="bg-red-500 text-white p-2 rounded" type="button" onClick={() => handleDelete(e.id)}>
+          <button
+            className="bg-red-500 text-white p-2 rounded"
+            type="button"
+            onClick={() => handleDelete(el.id)}
+          >
             Delete
           </button>
         </div>
