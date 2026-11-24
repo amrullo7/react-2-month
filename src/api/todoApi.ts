@@ -21,7 +21,7 @@ export const todoApi = createApi({
       query: (id) => ({
         url:`/api/to-dos?id=${id}`,
         method:"Delete"
-      } )
+      } ),
       invalidatesTags:[`Todos`]
     }),
   }),

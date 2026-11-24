@@ -1,6 +1,6 @@
-import axios from 'axios'
-let api='https://to-dos-api.softclub.tj/'
-async function getUser(e:any) {
+let api="https://to-dos-api.softclub.tj/"
+import axios from "axios"
+export const getTodo=async()=>{
     try {
         let {data}=await axios.get(api+"api/to-dos")
         return data
@@ -9,7 +9,7 @@ async function getUser(e:any) {
         
     }
 }
-async function deleteUser(id:number) {
+export const deleteTodo=async(id)=>{
     try {
         await axios.delete(api+"api/to-dos?id="+id)
     } catch (error) {
@@ -17,22 +17,33 @@ async function deleteUser(id:number) {
         
     }
 }
-async function addUser(newuser:any) {
+export const addTodo=async(user)=>{
     try {
-        await axios.post(api+"api/to-dos",newuser)
+        await axios.post(api+"api/to-dos",user)
     } catch (error) {
         console.error(error);
         
     }
-    
 }
-async function editUser(newuser:any) {
+export const editTodo=async(user)=>{
     try {
-        await axios.put(api+"api/to-dos?id="+newuser.id,newuser)
+        await axios.put(api+"api/to-dos",user)
     } catch (error) {
         console.error(error);
         
     }
-    
 }
-export {  getUser, deleteUser,addUser,editUser}
+export const deleteimg=async(id:number)=>{
+    try {
+        await axios.delete("https://to-dos-api.softclub.tj/api/to-dos/images/"+id)
+    } catch (error) {
+        console.error(error);
+        
+    }
+}
+export const addimg = async (id: number, img: FormData) => {
+  await axios.post(
+    `https://to-dos-api.softclub.tj/api/to-dos/${id}/images`,
+    img
+  )
+}
